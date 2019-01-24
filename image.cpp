@@ -19,7 +19,7 @@
 /* ------------- Utility --------------*/
 using namespace std;
 static const float pi = 3.14159265358979;
-static float Max=1e10, zero_threshold=1e-6, big_threshold = 0.01, medium_threshold=1e-4;
+static float Max=1e10, zero_threshold=1e-6, big_threshold = 0.002, medium_threshold=1e-4;
 #define PI ((float)3.14159265358979)
 #define ALPHA ((float)0.85)
 int pvalue[61]={
@@ -872,10 +872,7 @@ Vector3d& Patch::getCentroid(){
     return centroid;
 }
 bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
-    /*
     float t = (centroid - view.from).dot(view.direction);
-    if (t<0)
-        return false;
     if (u_range[1]-u_range[0] <= big_threshold){
         info->object = this;
         info->tuv = Vector3d(t, (u_range[0] + u_range[1])/2, (v_range[0] + v_range[1])/2);
@@ -886,7 +883,6 @@ bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
         info->color = Vector3d::max(Vector3d(color.r/255., color.g/255., color.b/255.), Vector3d(0, 0, 0));
         return true;
     }
-    */
     Matrix tuple = surface->intersect(view, u_range, v_range);
     if (tuple[0][0] > 0){
         info->object = this;

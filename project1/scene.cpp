@@ -16,7 +16,7 @@ Scene scene_0(
         Light(Vector3d(13, -13, 5), Vector3d(-1, 0.5, -0.5), 0.4, "red"),
         Light(Vector3d(13, 13, 5), Vector3d(-1, -0.5, -0.5), 0.4, "blue")
         },
-    100, 50,
+    100, 100,
     1.,
     100000000,
     1, 1000
@@ -61,16 +61,16 @@ void construct_0(int seed, int length){
     string same_color = "gray";
     float up = 15, down = -15, left = -15, right = 15, front = -15, back = 20, ground = -1;
 
-    NurbsSurface floor(2, 2, same_color, 1);
-    floor.binary_expand(
-            NurbsCurve(vector<Vector3d>{Vector3d(front, left, down), Vector3d(back, left, down)}),
-            NurbsCurve(vector<Vector3d>{Vector3d(front, left, down), Vector3d(front, right, down)}));
-
     NurbsSurface water(20, 20, "glass", 2);
     water.water_expand(
             NurbsCurve(vector<Vector3d>{Vector3d(front, left, ground), Vector3d(back, left, ground)}),
             NurbsCurve(vector<Vector3d>{Vector3d(front, left, ground), Vector3d(front, right, ground)}),
             0.8, 0.4, seed);
+
+    NurbsSurface floor(2, 2, same_color, 1);
+    floor.binary_expand(
+            NurbsCurve(vector<Vector3d>{Vector3d(front, left, down), Vector3d(back, left, down)}),
+            NurbsCurve(vector<Vector3d>{Vector3d(front, left, down), Vector3d(front, right, down)}));
 
     NurbsSurface wall_front(2, 2, same_color, 1);
     wall_front.binary_expand(
