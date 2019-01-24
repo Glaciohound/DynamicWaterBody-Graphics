@@ -41,18 +41,7 @@ struct HPoint {
 struct List {HPoint *id; List *next;};
 List* ListAdd(HPoint *i,List* h);
 
-class Color{
-    public:
-        int r, g, b;
-        Color(int r=0, int g=0, int b=0);
-        Color(string);
-        void print();
-        friend ostream &operator<<(ostream&, const Color&);
-        bool operator==(Color);
-        float operator-(Color);
-        Color operator+(Color);
-        Color operator*(float);
-};
+typedef Vector3d Color;
 Color get_color(string);
 class Vector3d;
 class NurbsCurve;

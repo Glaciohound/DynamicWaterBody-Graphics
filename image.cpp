@@ -91,38 +91,12 @@ bool has_color(string color_name){
     else 
         return false;
 }
-Color::Color(int r, int g, int b){
-    this->r = r;
-    this->g = g;
-    this->b = b;
-}
-Color::Color(string name){
-    *this = get_color(name);
-}
-void Color::print(){
-    cout << (*this);
-}
-ostream &operator<<(ostream& stream, const Color& color){
-    return stream << "Color:(" << (int) color.r << ',' << (int) color.g << ',' << (int) color.b << ')' << endl;
-};
-bool Color::operator==(Color other){
-    return r==other.r && g==other.g && b==other.b;
-}
-float Color::operator-(Color other){
-    return abs(r - other.r) + abs(g - other.g) + abs(b - other.b);
-}
+// TODO project2 will suck without - operator
 Light::Light(Vector3d f, Vector3d d, float r, string name):
     from(f), direction(d.normalized()), range(r), color(name){
         fin = direction.get_FinVector();
         handle = direction.cross(fin);
     }
-Color Color::operator+(Color other){
-    return Color(r+other.r, g+other.g, b+other.b);
-}
-Color Color::operator*(float k){
-    return Color((int)r*k, (int)g*k, (int)b*k);
-}
-
 
 /* ------------ Image Zone -------------*/
 
@@ -205,17 +179,17 @@ void Image::draw_point(float x, float y, Color color){
     int i=x*height+width/2, j=y*height+height/2, w=width, h=height;
     if (i>=width || i<0 || j>=height || j<0)
         return;
-    img[3*((h-1-j)*w+i)+2] = color.r;
-    img[3*((h-1-j)*w+i)+1] = color.g;
-    img[3*((h-1-j)*w+i)+0] = color.b;
+    img[3*((h-1-j)*w+i)+2] = (int)color.x;
+    img[3*((h-1-j)*w+i)+1] = (int)color.y;
+    img[3*((h-1-j)*w+i)+0] = (int)color.z;
 }
 void Image::draw_point(int i, int j, Color color){
     int w=width, h=height;
     if (i>=width || i<0 || j>=height || j<0)
         return;
-    img[3*((h-1-j)*w+i)+2] = color.r;
-    img[3*((h-1-j)*w+i)+1] = color.g;
-    img[3*((h-1-j)*w+i)+0] = color.b;
+    img[3*((h-1-j)*w+i)+2] = color.x;
+    img[3*((h-1-j)*w+i)+1] = color.y;
+    img[3*((h-1-j)*w+i)+0] = color.z;
 }
 Color Image::pick_color(int i, int j){
     if (feature == "mono" || feature == "mirror" || feature == "glass"){
@@ -241,22 +215,22 @@ void Image::calculate_value(string type){
     if (type == "horizontal"){
         for (int i=0; i!=width; i++)
             for (int j=0; j!=height; j++){
-                values[i][j] = pick_color(i, j) - pick_color(i+1, j);
+                values[i][j] = (pick_color(i, j) - pick_color(i+1, j)).norm("1");
             }
     }
     if (type == "vertical"){
         for (int i=0; i!=width; i++)
             for (int j=0; j!=height; j++){
                 Color t = pick_color(i, j), n = pick_color(i, j+1);
-                values[i][j] = pow(t.r - n.r, 2) + pow(t.b - n.b, 2) + pow(t.g - n.g, 2);
+                values[i][j] = pow((t-n).norm("2"), 2);
             }
     }
     if (type == "mix"){
         for (int i=0; i!=width; i++)
             for (int j=0; j!=height; j++){
                 values[i][j] =
-                    (pick_color(i, j) - pick_color(i, j+1)) +
-                    (pick_color(i, j) - pick_color(i+1, j));
+                    (pick_color(i, j) - pick_color(i, j+1)).norm("1") +
+                    (pick_color(i, j) - pick_color(i+1, j)).norm("2");
             }
     }
 }
@@ -445,7 +419,7 @@ void Image::protect(int x1, int x2, int y1, int y2){
         for (int j=y1; j!=y2; j++){
             values[i][j] = 1e10;
             Color c = pick_color(i, j);
-            draw_point(i, j, Color(c.r/2, c.b/2, c.g/2));
+            draw_point(i, j, Color(c.x/2, c.z/2, c.y/2));
         }
 }
 void Image::remove(int x1, int x2, int y1, int y2){
@@ -453,7 +427,7 @@ void Image::remove(int x1, int x2, int y1, int y2){
         for (int j=y1; j!=y2; j++){
             values[i][j] = -1e10;
             Color c = pick_color(i, j);
-            draw_point(i, j, Color(c.r/2, c.b/2, c.g/2));
+            draw_point(i, j, Color(c.x/2, c.z/2, c.y/2));
         }
 }
 Image Image::denoise(int size, float alpha){
@@ -880,7 +854,7 @@ bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
         info->norm = norm;
         info->intersected = true;
         Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
-        info->color = Vector3d::max(Vector3d(color.r/255., color.g/255., color.b/255.), Vector3d(0, 0, 0));
+        info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
         return true;
     }
     Matrix tuple = surface->intersect(view, u_range, v_range);
@@ -891,7 +865,7 @@ bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
         info->norm = tuple[2];
         info->intersected = true;
         Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
-        info->color = Vector3d::max(Vector3d(color.r/255., color.g/255., color.b/255.), Vector3d(0, 0, 0));
+        info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
         return true;
     }
     else return false;
@@ -1068,7 +1042,7 @@ void Scene::build_hash_grid(const int w, const int h) {
 void Scene::genp(Ray* pr, Vector3d* f, int i, int j, int seed) {
     Light light = lights[j];
     Color lc = get_color(light.color);
-    Vector3d v(lc.r/255., lc.g/255., lc.b/255.);
+    Vector3d v(lc.x/255., lc.y/255., lc.z/255.);
     float r = seed / 150.;
     Vector3d vp = v.proceed(r);
 	*f = Vector3d(3000, 3000, 3000)*(PI*4.0) * vp;

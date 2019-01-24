@@ -106,6 +106,7 @@ class __attribute__((aligned(16))) Vector3d{
     /*inline*/ Vector3d project(Vector3d&, Vector3d&, Vector3d&);
     /*inline*/ Vector3d get_FinVector(Vector3d =Vector3d(0, 0, 1));
     /*inline*/ float norm();
+    /*inline*/ float norm(string s);
     /*inline*/ float get_min();
     /*inline*/ float get_max();
     /*inline*/ Vector3d normalized();

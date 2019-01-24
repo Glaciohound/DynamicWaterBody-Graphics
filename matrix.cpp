@@ -577,6 +577,12 @@ Vector3d Vector3d::get_FinVector(Vector3d guide){
 float Vector3d::norm(){
     return sqrt(x*x + y*y + z*z);
 }
+float Vector3d::norm(string type){
+    if (type == "2")
+        return sqrt(x*x + y*y + z*z);
+    else if (type == "1")
+        return abs(x) + abs(y) + abs(z);
+}
 Vector3d Vector3d::normalized(){
     return (*this)/sqrt(x*x+y*y+z*z);
 }
