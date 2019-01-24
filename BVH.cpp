@@ -34,12 +34,12 @@ uint32_t Box::maxDimension()  {
   return result;
 }
 
-double Box::surfaceArea()  {
+float Box::surfaceArea()  {
   return 2.f*( extent[0]*extent[2] + extent[0]*extent[1] + extent[1]*extent[2] );
 }
 
-#define loadps(mem)		_mm_load_ps((const double * const)(mem))
-#define storess(ss,mem)	_mm_store_ss((double * const)(mem),(ss))
+#define loadps(mem)		_mm_load_ps((const float * const)(mem))
+#define storess(ss,mem)	_mm_store_ss((float * const)(mem),(ss))
 #define minss			_mm_min_ss
 #define maxss			_mm_max_ss
 #define minps			_mm_min_ps
@@ -50,13 +50,12 @@ double Box::surfaceArea()  {
 #define rotatelps(ps)		_mm_shuffle_ps((ps),(ps), 0x39)
 #define muxhps(low,high)	_mm_movehl_ps((low),(high))	
 
-static const double flt_plus_inf = -logf(0);
-static const double __attribute__((aligned(16)))
+static const float flt_plus_inf = -logf(0);
+static const float __attribute__((aligned(16)))
   ps_cst_plus_inf[4] = {  flt_plus_inf,  flt_plus_inf,  flt_plus_inf,  flt_plus_inf },
   ps_cst_minus_inf[4] = { -flt_plus_inf, -flt_plus_inf, -flt_plus_inf, -flt_plus_inf };
 
-bool Box::intersect(Ray& view, double *tnear, double *tfar)  {
-    /*
+bool Box::intersect(Ray& view, float *tnear, float *tfar)  {
     const __m128
           plus_inf = loadps(ps_cst_plus_inf),
           minus_inf	= loadps(ps_cst_minus_inf),
@@ -93,13 +92,13 @@ bool Box::intersect(Ray& view, double *tnear, double *tfar)  {
     storess(lmax, tfar);
 
     return  ret; 
-    */
-    // originally used for double values
-    double pinf = 1e7, minf = -1e7;
+    /*
+    // originally used for float values
+    float pinf = 1e7, minf = -1e7;
     Vector3d r_1 = ((Vector3d)(mx - view.from))/(view.direction), r_2 = ((Vector3d)(mn - view.from))/(view.direction),
              filtered_r1a = Vector3d::min(r_1, pinf), filtered_r2a=Vector3d::min(r_2, pinf),
              filtered_r1b = Vector3d::max(r_1, minf), filtered_r2b=Vector3d::max(r_2, minf);
-    double lmax = Vector3d::max(filtered_r1a, filtered_r2a).get_min(),
+    float lmax = Vector3d::max(filtered_r1a, filtered_r2a).get_min(),
            lmin = Vector3d::min(filtered_r1b, filtered_r2b).get_max();
     bool output = lmax >= lmin;
     if (output){
@@ -107,4 +106,5 @@ bool Box::intersect(Ray& view, double *tnear, double *tfar)  {
         *tfar = lmax;
     }
     return output;
+    */
 }

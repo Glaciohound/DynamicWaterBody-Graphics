@@ -3,17 +3,17 @@ depends = matrix image utils BVH
 objects = $(target:=.o) $(depends:=.o)
 
 source = $(target:=.cpp)
-output = output
+output = ./outputs/trial
 
 compiler = g++
-optim = -O3 -fopenmp
-debug = #-fsanitize=address -fno-omit-frame-pointer 
+optim = #-O3 -fopenmp
+debug = -g -fsanitize=address -fno-omit-frame-pointer 
 FLAGS = $(debug) $(optim) -std=c++11
 
 kernel:
 	make clearall
 	make $(target)
-	#make run
+	make run
 	#make show
 	make clear
 
@@ -41,7 +41,7 @@ show:
 	open $(output).bmp
 	#open $(output).obj
 run:
-	./$(target) $(output) 70 10000
+	./$(target) $(output) 0 4000
 
 #Notes:
 #Sudo yum groupinstall “Development Tools”	

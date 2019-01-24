@@ -27,11 +27,11 @@ struct Box {
     Box(Vector3d& mn, Vector3d& mx);
     Box(Vector3d& p);
 
-    bool intersect(Ray& view, double *tnear, double *tfar) ;
+    bool intersect(Ray& view, float *tnear, float *tfar) ;
     void include( Vector3d& p);
     void include( Box& b);
     uint32_t maxDimension() ;
-    double surfaceArea() ;
+    float surfaceArea() ;
 
     friend ostream& operator<<(ostream& stream, const Box& box){
         return stream<<"Box:\n"<<box.mn<<box.mx;
@@ -71,9 +71,9 @@ struct BVHnode {
 template <class T>
 struct BVHshot {
     uint32_t i;
-    double mint;
+    float mint;
     BVHshot() { }
-    BVHshot(int _i, double _mint) : i(_i), mint(_mint) { }
+    BVHshot(int _i, float _mint) : i(_i), mint(_mint) { }
 };
 
 struct BVHentry {
@@ -98,7 +98,7 @@ IntersectionInfo<T> BVH<T>::intersect(Ray view, bool occlusion)  {
     IntersectionInfo<T> ret;
     ret.tuv[0] = 999999999.f;
     ret.object = NULL;
-    double bbhits[4];
+    float bbhits[4];
     int32_t closer, other;
 
     BVHshot<T> todo[64];
@@ -106,11 +106,11 @@ IntersectionInfo<T> BVH<T>::intersect(Ray view, bool occlusion)  {
 
     todo[stackptr].i = 0;
     todo[stackptr].mint = -9999999.f;
-    double self_threshold = 1e-4;
+    float self_threshold = 1e-4;
 
     while(stackptr>=0) {
         int ni = todo[stackptr].i;
-        double near = todo[stackptr].mint;
+        float near = todo[stackptr].mint;
         stackptr--;
         const BVHnode &node(flatTree[ ni ]);
 
@@ -210,7 +210,7 @@ void BVH<T>::build() {
         if(node.rightOffset == 0)
             continue;
         uint32_t split_dim = bc.maxDimension();
-        double split_coord = .5f * (bc.mn[split_dim] + bc.mx[split_dim]);
+        float split_coord = .5f * (bc.mn[split_dim] + bc.mx[split_dim]);
 
         uint32_t mid = start;
         for(uint32_t i=start;i<end;++i) {

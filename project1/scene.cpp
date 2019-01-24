@@ -16,7 +16,7 @@ Scene scene_0(
         Light(Vector3d(13, -13, 5), Vector3d(-1, 0.5, -0.5), 0.4, "red"),
         Light(Vector3d(13, 13, 5), Vector3d(-1, -0.5, -0.5), 0.4, "blue")
         },
-    1900, 1400,
+    100, 50,
     1.,
     100000000,
     1, 1000
@@ -25,23 +25,23 @@ Scene scene_(
         Vector3d()
         );
 
-double f_wing(double theta, double wing, double radius){
+float f_wing(float theta, float wing, float radius){
     return radius + exp(10*cos(3*theta))*(wing-min(wing, radius))/22000;
 }
-double f_SoftTriangle(double theta){
+float f_SoftTriangle(float theta){
     return 1 + pow(cos(3*theta)+3, 3)/120;
 }
-double f_egg(double x){
+float f_egg(float x){
     return sqrt(1-pow(1-x*2,2));
 }
-double recip(double x){
+float recip(float x){
     return 1/(x+0.1);
 }
 NurbsCurve circle("circle");
 NurbsCurve egg(f_egg, false);
 
 
-Vector3d norm(NurbsSurface* surface, double u, double v){
+Vector3d norm(NurbsSurface* surface, float u, float v){
     Matrix M = surface->getPoint(u, v);
     Vector3d su = M.pick_col(1), sv = M.pick_col(2);
     return su.cross(sv);
@@ -59,7 +59,7 @@ void construct_0(int seed, int length){
     */
 
     string same_color = "gray";
-    double up = 15, down = -15, left = -15, right = 15, front = -15, back = 20, ground = -1;
+    float up = 15, down = -15, left = -15, right = 15, front = -15, back = 20, ground = -1;
 
     NurbsSurface floor(2, 2, same_color, 1);
     floor.binary_expand(
@@ -105,7 +105,7 @@ void construct_0(int seed, int length){
 }
 
 void construct_1(int seed, int length){
-    double size = 30, ground = -10;
+    float size = 30, ground = -10;
     NurbsSurface water(400, 400, "glass", 2);
     water.water_expand(
             NurbsCurve(vector<Vector3d>{Vector3d(-size, -size, ground),

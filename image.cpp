@@ -18,10 +18,10 @@
 
 /* ------------- Utility --------------*/
 using namespace std;
-static const double pi = 3.14159265358979;
-static double Max=1e10, zero_threshold=1e-6, big_threshold = 0.01, medium_threshold=1e-4;
-#define PI ((double)3.14159265358979)
-#define ALPHA ((double)0.9)
+static const float pi = 3.14159265358979;
+static float Max=1e10, zero_threshold=1e-6, big_threshold = 0.01, medium_threshold=1e-4;
+#define PI ((float)3.14159265358979)
+#define ALPHA ((float)0.85)
 int pvalue[61]={
 	2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79, 83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181, 191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283
 };
@@ -32,9 +32,9 @@ inline int reverse(const int i,const int p) {
     else
         return p-i;
 }
-double hal(const int b, int j) {
+float hal(const int b, int j) {
 	const int p = pvalue[b]; 
-	double h = 0.0, f = 1.0 / (double)p, fct = f;
+	float h = 0.0, f = 1.0 / (float)p, fct = f;
 	while (j > 0) {
 		h += reverse(j % p, p) * fct; j /= p; fct *= f;
 	}
@@ -50,7 +50,7 @@ List* ListAdd(HPoint *i,List* h){
 inline unsigned int Scene::f_hash(const int ix, const int iy, const int iz) {
 	return (unsigned int)((ix*73856093)^(iy*19349663)^(iz*83492791))%num_hash;
 }
-int toInt(double x){
+int toInt(float x){
 	return int(pow(1-exp(-x),1/2.2)*255+.5);
 }
 inline int resize(int x){
@@ -108,10 +108,10 @@ ostream &operator<<(ostream& stream, const Color& color){
 bool Color::operator==(Color other){
     return r==other.r && g==other.g && b==other.b;
 }
-double Color::operator-(Color other){
+float Color::operator-(Color other){
     return abs(r - other.r) + abs(g - other.g) + abs(b - other.b);
 }
-Light::Light(Vector3d f, Vector3d d, double r, string name):
+Light::Light(Vector3d f, Vector3d d, float r, string name):
     from(f), direction(d.normalized()), range(r), color(name){
         fin = direction.get_FinVector();
         handle = direction.cross(fin);
@@ -119,14 +119,14 @@ Light::Light(Vector3d f, Vector3d d, double r, string name):
 Color Color::operator+(Color other){
     return Color(r+other.r, g+other.g, b+other.b);
 }
-Color Color::operator*(double k){
+Color Color::operator*(float k){
     return Color((int)r*k, (int)g*k, (int)b*k);
 }
 
 
 /* ------------ Image Zone -------------*/
 
-Image::Image(int w, int h, string command): feature(command), color(Color(0, 0, 0)), width(w), height(h), radius(min(w, h)/2), img(3*w*h, 0), measurement(w*h, Vector3d(0, 0, 0)), values(width, vector<double>(height, 0)){ }
+Image::Image(int w, int h, string command): feature(command), color(Color(0, 0, 0)), width(w), height(h), radius(min(w, h)/2), img(3*w*h, 0), measurement(w*h, Vector3d(0, 0, 0)), values(width, vector<float>(height, 0)){ }
 void Image::output(string outfile_name){
     FILE *f;
     int filesize = 54 + 3*width*height;
@@ -184,7 +184,7 @@ bool Image::from_file(string infile_name)
     vector<unsigned char>().swap(img);
     img = vector<unsigned char>(width * height * 3);
     int m = max(height, width);
-    values = vector<vector<double>>(m, vector<double>(m, 0));
+    values = vector<vector<float>>(m, vector<float>(m, 0));
     DP_values = vector<vector<Pair>>(m, vector<Pair>(m));
     seam = vector<int>(max(width, height));
     unsigned char* input_string = &img[0];
@@ -200,7 +200,7 @@ bool Image::from_file(string infile_name)
 void Image::reset(int w, int h){
     *this = Image(w, h);
 }
-void Image::draw_point(double x, double y, Color color){
+void Image::draw_point(float x, float y, Color color){
     int radius = min(width, height)/2;
     int i=x*height+width/2, j=y*height+height/2, w=width, h=height;
     if (i>=width || i<0 || j>=height || j<0)
@@ -230,7 +230,7 @@ Color Image::pick_color(int i, int j){
             resize(img[3*((h-1-j)*w+i)+0])
             );
 }
-Color Image::pick_color(double x, double y){
+Color Image::pick_color(float x, float y){
     return pick_color((int)(x*width), (int)(y*height));
 }
 void Image::draw_from_measurement(){
@@ -435,7 +435,7 @@ Image Image::transpose(){
         for (int j=0; j!=height; j++)
             output.draw_point(j, i, pick_color(i, j));
     int m = max(width, height);
-    output.values = vector<vector<double>>(m, vector<double>(m, 0));
+    output.values = vector<vector<float>>(m, vector<float>(m, 0));
     output.DP_values = vector<vector<Pair>>(m, vector<Pair>(m));
     output.seam = vector<int>(m);
     return output;
@@ -456,7 +456,7 @@ void Image::remove(int x1, int x2, int y1, int y2){
             draw_point(i, j, Color(c.r/2, c.b/2, c.g/2));
         }
 }
-Image Image::denoise(int size, double alpha){
+Image Image::denoise(int size, float alpha){
     Image output = *this;
     cout<<"Denoise"<<endl;
     ProgressBar pbar(height*width);
@@ -465,7 +465,7 @@ Image Image::denoise(int size, double alpha){
     for (int i=0; i<=width-1; i++)
         for (int j=0; j<=height-1; j++){
             pbar.update();
-            double sum = 1 - num * alpha;
+            float sum = 1 - num * alpha;
             Color result = pick_color(i, j) * (sum * large);
             for (int x = max(i-size, 0); x<=min(i+size, width-1); x++)
                 for (int y = max(j-size, 0); y<=min(j+size, height-1); y++)
@@ -503,42 +503,42 @@ NurbsCurve::NurbsCurve(string command, int n, int k):n(n), k(min(n-1, k)), Contr
             ControlPoints[i] = Vector3d(cos(2*pi*i/(n-1)), sin(2*pi*i/(n-1)), 0);
     }
 }
-NurbsCurve::NurbsCurve(double (*f)(double),bool polar, int n, int k): NurbsCurve(n, k){
+NurbsCurve::NurbsCurve(float (*f)(float),bool polar, int n, int k): NurbsCurve(n, k){
     for (int i=0; i!=n; i++)
         if (polar){
-            double theta = 2*pi*i/(n-1), r = f(theta);
+            float theta = 2*pi*i/(n-1), r = f(theta);
             ControlPoints[i] = Vector3d(r*cos(theta), r*sin(theta), 0);
         }
         else
             ControlPoints[i] = Vector3d(f(i*1./(n-1)), 0, i*1./(n-1));
 }
-NurbsCurve operator*(double c, NurbsCurve curve){
+NurbsCurve operator*(float c, NurbsCurve curve){
     NurbsCurve output = curve;
     for (int i=0; i!=curve.n; i++)
         output.ControlPoints[i] = c * output.ControlPoints[i];
     return output;
 }
-NurbsCurve NurbsCurve::operator*(double c){
+NurbsCurve NurbsCurve::operator*(float c){
     return c*(*this);
 }
-double NurbsCurve::get_max(){
-    double output = -100;
+float NurbsCurve::get_max(){
+    float output = -100;
     for (int i=0; i!=n; i++)
         output = max(ControlPoints[i][2], output);
     return output;
 }
-double NurbsCurve::get_min(){
-    double output = 100;
+float NurbsCurve::get_min(){
+    float output = 100;
     for (int i=0; i!=n; i++)
         output = min(ControlPoints[i][2], output);
     return output;
 }
 static vector<bezier_coefficient_item> bezier_coeffs;
 bezier_coefficient_item::bezier_coefficient_item(int n, int k):
-    n(n), k(k), coeffs(k+1, vector<vector<double>>(n+k+2, vector<double>(4))){
+    n(n), k(k), coeffs(k+1, vector<vector<float>>(n+k+2, vector<float>(4))){
     if (n==0)
         return;
-    vector<double> t_(n+k+2, 0.0);
+    vector<float> t_(n+k+2, 0.0);
     for (int i=0; i!=n+k+2; i++)
         t_[i] = min(max(i-k, 0), n-k);
     for (int p=1; p!=k+1; p++){
@@ -562,7 +562,7 @@ bezier_coefficient_item::bezier_coefficient_item(int n, int k):
         }
     }
 }
-Matrix Bezier(int n, int k, double t){
+Matrix Bezier(int n, int k, float t){
     if (t<0 || t>1){
         cout<<t<<' '<<"t out of range"<<endl;
     }
@@ -579,13 +579,13 @@ Matrix Bezier(int n, int k, double t){
         index = bezier_coeffs.size()-1;
     }
     bezier_coefficient_item& coeffs = bezier_coeffs[index];
-    double values[2*(k+1)] = {0};
+    float values[2*(k+1)] = {0};
     if (t>=1)
         t = 1-zero_threshold;
     t = t * (n-k);
     int t0 = int(t) - k, t1 = int(t);
     if (k==2){
-        double  A = coeffs.coeffs[1][t1+1][3] - t * coeffs.coeffs[1][t1+1][2],
+        float  A = coeffs.coeffs[1][t1+1][3] - t * coeffs.coeffs[1][t1+1][2],
                 B = coeffs.coeffs[1][t1+2][0] * t - coeffs.coeffs[1][t1+2][1],
                 C = k*(n-k);
         values[0] = (coeffs.coeffs[2][t1][3] - t * coeffs.coeffs[2][t1][2]) * A,
@@ -597,7 +597,7 @@ Matrix Bezier(int n, int k, double t){
         values[5] = C * B * coeffs.coeffs[2][t1+2][0];
         return Matrix(values, 2, 3);
     }
-    vector<double> weights(k+2, 0.0),
+    vector<float> weights(k+2, 0.0),
         weights_p(k+2, 0.0),
         t_(2*k+2, 0.0);
     weights_p[k] = 1;
@@ -619,7 +619,7 @@ Matrix Bezier(int n, int k, double t){
     }
     return Matrix(values, 2, k+1);
 }
-Matrix NurbsCurve::getPoint(double t){
+Matrix NurbsCurve::getPoint(float t){
     Matrix parameters = Bezier(n, k, t);
     Vector3d output, derivative;
     if (t == 1)
@@ -635,10 +635,10 @@ Matrix NurbsCurve::getPoint(double t){
 }
 
 
-double NurbsCurve::get_t_from_height(double h){
-    double ret = 0;
+float NurbsCurve::get_t_from_height(float h){
+    float ret = 0;
     for (int i=0; i!=10; i++){
-        double hp = getPoint(ret)[0][2];
+        float hp = getPoint(ret)[0][2];
         if (h >= hp)
             ret += pow(0.5, i+1);
         else
@@ -671,10 +671,10 @@ NurbsSurface::NurbsSurface(int m, int n, string command, int k): m(m), n(n), k(m
     }
 }
 void NurbsSurface::cylinder_surface(NurbsCurve spine, NurbsCurve base, NurbsCurve width, Vector3d fin){
-    double mx = width.get_max(), mn = width.get_min(), height = mx-mn;
+    float mx = width.get_max(), mn = width.get_min(), height = mx-mn;
     for (int i=0; i!=n; i++){
         Vector3d support = width.getPoint(1.*i/(n-1))[0];
-        double t = (support[2] - mn) / height,
+        float t = (support[2] - mn) / height,
                w = support[0];
         if (t>1) t = 1;
         if (t<0) t = 0;
@@ -690,19 +690,19 @@ void NurbsSurface::cylinder_surface(NurbsCurve spine, NurbsCurve base, NurbsCurv
         }
     }
 }
-void NurbsSurface::rocket_body(NurbsCurve body_shape, NurbsCurve wing_shape, double (*f_wing)(double, double, double)){
-    double height = body_shape.get_max() - body_shape.get_min();
+void NurbsSurface::rocket_body(NurbsCurve body_shape, NurbsCurve wing_shape, float (*f_wing)(float, float, float)){
+    float height = body_shape.get_max() - body_shape.get_min();
     for (int i=0; i!=n; i++){
         Vector3d wingpoint = wing_shape.getPoint(1.*i/(n-1))[0];
-        double wing_span = wingpoint[0],
+        float wing_span = wingpoint[0],
                h = wingpoint[2]*height,
                t = body_shape.get_t_from_height(h);
         Vector3d body_point = body_shape.getPoint(t)[0];
-        double body_width = body_point[0];
+        float body_width = body_point[0];
         if (t>1) t = 1;
         if (t<0) t = 0;
         for (int j=0; j!=m; j++){
-            double theta = 2*pi*j/(m-1), r = f_wing(theta, wing_span, body_width);
+            float theta = 2*pi*j/(m-1), r = f_wing(theta, wing_span, body_width);
             ControlPoints[j][i] = Vector3d(r*cos(theta), r*sin(theta), h);
         }
     }
@@ -717,12 +717,12 @@ void NurbsSurface::binary_expand(NurbsCurve curve_x, NurbsCurve curve_y){
         }
     }
 }
-double wave_function(double x, double y, double wave_length, double height, double move){
+float wave_function(float x, float y, float wave_length, float height, float move){
     return  sin((0.7*x+0.7*y + move/10)/wave_length)*height +
             sin((-0.95*x+0.2*y + move/10)/wave_length)*height; +
             sin((0.2*x-0.95*y + move/10)/wave_length)*height;
 }
-void NurbsSurface::water_expand(NurbsCurve curve_x, NurbsCurve curve_y, double wave_length, double height, double move){
+void NurbsSurface::water_expand(NurbsCurve curve_x, NurbsCurve curve_y, float wave_length, float height, float move){
     Vector3d from = curve_y.getPoint(0)[0],
              basePoint;
     for (int i=0; i!=m; i++){
@@ -757,7 +757,7 @@ void NurbsSurface::build_patches(){
             patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1)));
         }
 }
-Matrix NurbsSurface::getPoint(double u, double v){
+Matrix NurbsSurface::getPoint(float u, float v){
     Matrix parm_u = Bezier(m, k, u),
            parm_v = Bezier(n, k, v);
     if (u == 1)
@@ -769,7 +769,7 @@ Matrix NurbsSurface::getPoint(double u, double v){
         Vector3d    &v00 = ControlPoints[u0][v0], &v01 = ControlPoints[u0][v0+1], &v02 = ControlPoints[u0][v0+2],
                     &v10 = ControlPoints[u0+1][v0], &v11 = ControlPoints[u0+1][v0+1], &v12 = ControlPoints[u0+1][v0+2],
                     &v20 = ControlPoints[u0+2][v0], &v21 = ControlPoints[u0+2][v0+1], &v22 = ControlPoints[u0+2][v0+2];
-        vector<double> &wu = parm_u[0], &wv = parm_v[0], &pu = parm_u[1], &pv = parm_v[1];
+        vector<float> &wu = parm_u[0], &wv = parm_v[0], &pu = parm_u[1], &pv = parm_v[1];
         Vector3d result =       wu[0]*wv[0]*v00 + wu[0]*wv[1]*v01 + wu[0]*wv[2]*v02 +
                                 wu[1]*wv[0]*v10 + wu[1]*wv[1]*v11 + wu[1]*wv[2]*v12 +
                                 wu[2]*wv[0]*v20 + wu[2]*wv[1]*v21 + wu[2]*wv[2]*v22,
@@ -792,14 +792,14 @@ Matrix NurbsSurface::getPoint(double u, double v){
 }
 Matrix NurbsSurface::intersect(Ray view, Vector u_range, Vector v_range){
 
-    double u = (u_range[0] + u_range[1])/2,
+    float u = (u_range[0] + u_range[1])/2,
           v = (v_range[0] + v_range[1])/2,
           margin = (u_range[1] - u_range[0])*1;
     Vector3d direction = view.direction.normalized();
     int num_iter = 10;
     Vector3d n1 = direction.get_FinVector(),
              n2 = direction.cross(n1);
-    double d1 = 0 - view.from.dot(n1),
+    float d1 = 0 - view.from.dot(n1),
            d2 = 0 - view.from.dot(n2);
     bool found = false;
     Matrix getpoint;
@@ -831,13 +831,13 @@ Matrix NurbsSurface::intersect(Ray view, Vector u_range, Vector v_range){
         v -= delta[1];
         found = R.norm() < medium_threshold ;
         if (u<u_range[1]+margin && u>u_range[0]-margin && v>v_range[0]-margin && v<v_range[1]+margin){
-            u = min(max(u, 0.), 1.);
-            v = min(max(v, 0.), 1.);
+            u = min(max(u, (float)0.), (float)1.);
+            v = min(max(v, (float)0.), (float)1.);
         } 
         else break;
     }
     if (found){
-        double t = (S-view.from).dot(direction);
+        float t = (S-view.from).dot(direction);
         if (t>0)
             return Matrix({Vector3d(t, u, v), S, S_u.cross(S_v).normalized()});
         else return Matrix(3, 3, -1);
@@ -848,10 +848,10 @@ Matrix NurbsSurface::intersect(Ray view, Vector u_range, Vector v_range){
 
 /* ------------ Patch Zone -------------*/
 
-Patch::Patch(NurbsSurface* surface, double xmin, double xmax, double ymin, double ymax):
+Patch::Patch(NurbsSurface* surface, float xmin, float xmax, float ymin, float ymax):
     surface(surface),
-    u_range(vector<double>{xmin, xmax}),
-    v_range(vector<double>{ymin, ymax}) {
+    u_range(vector<float>{xmin, xmax}),
+    v_range(vector<float>{ymin, ymax}) {
         int m = surface->m, n = surface->n, k = surface->k;
         int imin = xmin*(m - k),
             imax = xmax*(m - k) + k-1,
@@ -873,7 +873,7 @@ Vector3d& Patch::getCentroid(){
 }
 bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
     /*
-    double t = (centroid - view.from).dot(view.direction);
+    float t = (centroid - view.from).dot(view.direction);
     if (t<0)
         return false;
     if (u_range[1]-u_range[0] <= big_threshold){
@@ -906,7 +906,7 @@ ostream& operator<<(ostream& stream, const Patch& patch){
 
 /* ------------ Scene Zone -------------*/
 
-Scene::Scene(Vector3d v1, Vector3d v2, vector<Light> lights, int w, int h, double d, long num_sample, int multi_select, int num_thread):
+Scene::Scene(Vector3d v1, Vector3d v2, vector<Light> lights, int w, int h, float d, long num_sample, int multi_select, int num_thread):
     image(w, h), ViewYBase(), obj_file(6), v_count(0), View(v1, v2.normalized(), NULL), lights(lights), num_sample(num_sample), multi_select(multi_select), num_thread(num_thread), scale(d){
     ViewYBase = View.direction.get_FinVector();
     ViewXHandle = View.direction.cross(ViewYBase);
@@ -935,10 +935,10 @@ void Scene::sketch(NurbsCurve curve, int num, Color color){
 }
 void Scene::sketch(Vector3d v, Color color){
     Vector3d v_r = v - View.from;
-    double z = v_r.dot(View.direction);
+    float z = v_r.dot(View.direction);
     if (z<0) return;
     else v_r = v_r - z*View.direction;
-    double y = v_r.dot(ViewYBase),
+    float y = v_r.dot(ViewYBase),
            x = -v_r.cross(ViewYBase).dot(View.direction);
 }
 void Scene::output(string s, int up_to_now){
@@ -953,7 +953,7 @@ void Scene::output(string s, int up_to_now){
     image.draw_from_measurement();
     image.output(s);
 }
-Color Scene::trace_ray(double x, double y){
+Color Scene::trace_ray(float x, float y){
     Vector3d direction = View.direction + x/scale*ViewXHandle +
                             y/scale*ViewYBase,
              result(-1, 0, 0);
@@ -966,7 +966,7 @@ Color Scene::trace_ray(double x, double y){
 
     return color;
 }
-Vector3d Scene::shoot_ray(double x, double y){
+Vector3d Scene::shoot_ray(float x, float y){
     return (View.direction + x/scale*ViewXHandle +
                             y/scale*ViewYBase).normalized();
 }
@@ -979,7 +979,7 @@ void Scene::render(string file_name, int seed){
             for (int j=0; j!=multi_select; j++){
                 int k = x+y*image.width;
                 Vector3d d = shoot_ray(2.*(x+hal(13, k))/image.width-1, -2.*(y+hal(16, k))/image.height+1);
-                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(1, 1, 1), 0, x+y*image.width);
+                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(3, 3, 3), 0, x+y*image.width);
 		}
         pbar.update();
 	}
@@ -992,7 +992,7 @@ void Scene::render(string file_name, int seed){
     int num_lights = lights.size();
 	#pragma omp parallel for schedule(dynamic, 1)
 	for(int i=0;i<num_photon;i++) {
-		double p=100.*(i+1)/num_photon;
+		float p=100.*(i+1)/num_photon;
 		int m=num_thread*i; 
 		Ray r(Vector3d(0, 0, 0), Vector3d(0, 0, 0), NULL); 
 		Vector3d f;
@@ -1033,7 +1033,7 @@ void Scene::build_hash_grid(const int w, const int h) {
 	}
 
 	Vector3d ssize = hpbbox.max - hpbbox.min;
-	double irad = ((ssize.x + ssize.y + ssize.z) / 3.0) / ((w + h) / 2.0) * 2.0;
+	float irad = ((ssize.x + ssize.y + ssize.z) / 3.0) / ((w + h) / 2.0) * 2.0;
 
 	hpbbox.reset(); 
 	lst = hitpoints; 
@@ -1073,10 +1073,10 @@ void Scene::genp(Ray* pr, Vector3d* f, int i, int j, int seed) {
     Light light = lights[j];
     Color lc = get_color(light.color);
     Vector3d v(lc.r/255., lc.g/255., lc.b/255.);
-    double r = seed / 150.;
+    float r = seed / 150.;
     Vector3d vp = v.proceed(r);
 	*f = Vector3d(3000, 3000, 3000)*(PI*4.0) * vp;
-	double p=2.*PI*hal(0,i/lights.size()), t=2.*acos(sqrt(1.-hal(1,i/lights.size())));
+	float p=2.*PI*hal(0,i/lights.size()), t=2.*acos(sqrt(1.-hal(1,i/lights.size())));
     pr->direction = cos(p)*sin(t)*light.fin + sin(p)*sin(t)*light.handle + cos(t)*light.direction; 
     pr->from = light.from;
 }
@@ -1095,12 +1095,12 @@ void Scene::trace(const Ray &r,int dpt,bool m,const Vector3d &fl, const Vector3d
              n = info.norm,
              f = info.color;
 	Vector3d nl=n.dot(r.direction)<0?n:n*-1; 
-	double p=f.x>f.y&&f.x>f.z?f.x:f.y>f.z?f.y:f.z;
+	float p=f.x>f.y&&f.x>f.z?f.x:f.y>f.z?f.y:f.z;
 
 
 	if (obj->surface->image.feature=="mono" || obj->surface->image.feature=="image") {
-		double r1=2.*PI*hal(d3-1,i),r2=hal(d3+0,i);
-		double r2s=sqrt(r2);
+		float r1=2.*PI*hal(d3-1,i),r2=hal(d3+0,i);
+		float r2s=sqrt(r2);
 		Vector3d w=nl,u=((fabs(w.x)>.1?Vector3d(0,1):Vector3d(1))%w).normalized();
 		Vector3d v=w%u, d = (u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrt(1-r2)).normalized();
 		if (m) {
@@ -1123,7 +1123,7 @@ void Scene::trace(const Ray &r,int dpt,bool m,const Vector3d &fl, const Vector3d
 					hp = hp->next; 
 					Vector3d v = hitpoint->pos - x;
 					if ((hitpoint->nrm.dot(n) > 1e-3) && (v.dot(v) <= hitpoint->r2)) {
-						double g = (hitpoint->n*ALPHA+ALPHA) / (hitpoint->n*ALPHA+1.0);
+						float g = (hitpoint->n*ALPHA+ALPHA) / (hitpoint->n*ALPHA+1.0);
 						hitpoint->r2=hitpoint->r2*g; 
 						hitpoint->n++;
 						hitpoint->flux=(hitpoint->flux+hitpoint->f.mul(fl)*(1./PI))*g;
@@ -1138,13 +1138,13 @@ void Scene::trace(const Ray &r,int dpt,bool m,const Vector3d &fl, const Vector3d
 	} else if (obj->surface->image.feature=="glass"){
 		Ray lr(x,r.direction-n*2.0*n.dot(r.direction), obj->surface); 
 		bool into = (n.dot(nl)>0.0);
-		double nc = 1.0, nt=1.33, nnt = into?nc/nt:nt/nc, ddn = r.direction.dot(nl), cos2t;
+		float nc = 1.0, nt=1.33, nnt = into?nc/nt:nt/nc, ddn = r.direction.dot(nl), cos2t;
 
 		if ((cos2t=1-nnt*nnt*(1-ddn*ddn))<0) return trace(lr,dpt,m,fl,adj,i, pixel_index);
 
 		Vector3d td = (r.direction*nnt - n*((into?1:-1)*(ddn*nnt+sqrt(cos2t)))).normalized();
-		double a=nt-nc, b=nt+nc, R0=a*a/(b*b), c = 1-(into?-ddn:td.dot(n));
-		double Re=R0+(1-R0)*c*c*c*c*c,P=Re;Ray rr(x,td, obj->surface);
+		float a=nt-nc, b=nt+nc, R0=a*a/(b*b), c = 1-(into?-ddn:td.dot(n));
+		float Re=R0+(1-R0)*c*c*c*c*c,P=Re;Ray rr(x,td, obj->surface);
         Vector3d fa=f.mul(adj);
 		if (m) {
 			trace(lr,dpt,m,fl,fa*Re,i, pixel_index);
