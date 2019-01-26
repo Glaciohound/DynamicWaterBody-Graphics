@@ -69,7 +69,7 @@ class Image{
         string feature;
         Color color;
         vector<vector<Color>> image;
-        vector<Vector3d> measurement;
+        vector<vector<Vector3d>> measurement;
         vector<vector<float>> values;
         vector<vector<Pair>> DP_values;
         vector<int> seam;

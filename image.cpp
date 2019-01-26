@@ -105,8 +105,8 @@ Image::Image(int w, int h, string command):
     width(w), height(h),
     image(width, vector<Color>(height)),
     radius(min(w, h)/2),
-    measurement(w*h, Vector3d(0, 0, 0)),
-    values(width, vector<float>(height, 0)){ }
+    measurement(w, vector<Vector3d>(h)),
+    values(width, vector<float>(height)){ }
 void Image::output(string outfile_name){
     FILE *f;
     int filesize = 54 + 3*width*height;
@@ -216,8 +216,9 @@ Color Image::pick_color(float x, float y){
     return pick_color((int)(x*width), (int)(y*height));
 }
 void Image::draw_from_measurement(){
-    for(int i = 0; i< width * height; i++)
-        draw_point(i%width, height-i/width, Color(toInt(measurement[i].x), toInt(measurement[i].y), toInt(measurement[i].z)));
+    for(int i = 0; i< width; i++)
+        for (int j=0; j < height; j++)
+            draw_point(i, j, Color(toInt(measurement[i][j].x), toInt(measurement[i][j].y), toInt(measurement[i][j].z)));
 }
 
 
@@ -924,12 +925,13 @@ void Scene::sketch(Vector3d v, Color color){
 }
 void Scene::output(string s, int up_to_now){
 	List* lst=hitpoints; 
-    image.measurement.assign(image.width*image.height, Vector3d(0, 0, 0));
+    image.measurement.assign(image.width, vector<Vector3d>(image.height));
 	while (lst != NULL) {
 		HPoint* hp=lst->id;
 		lst=lst->next;
-		int i=hp->pix;
-        image.measurement[i]=image.measurement[i]+hp->flux*(1.0/(PI*hp->r2*up_to_now))/multi_select;
+		int i=hp->pix, j=i/image.width;
+        i = i%image.width;
+        image.measurement[i][j]=image.measurement[i][j]+hp->flux*(1.0/(PI*hp->r2*up_to_now))/multi_select;
 	}
     image.draw_from_measurement();
     image.output(s);
@@ -960,7 +962,7 @@ void Scene::render(string file_name, int seed){
             for (int j=0; j!=multi_select; j++){
                 int k = x+y*image.width;
                 Vector3d d = shoot_ray(2.*(x+hal(13, k))/image.width-1, -2.*(y+hal(16, k))/image.height+1);
-                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(3, 3, 3), 0, x+y*image.width);
+                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(1, 1, 1), 0, x+y*image.width);
 		}
         pbar.update();
 	}

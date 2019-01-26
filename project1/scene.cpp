@@ -16,7 +16,7 @@ Scene scene_0(
         Light(Vector3d(13, -13, 5), Vector3d(-1, 0.5, -0.5), 0.4, "red"),
         Light(Vector3d(13, 13, 5), Vector3d(-1, -0.5, -0.5), 0.4, "blue")
         },
-    400, 300,
+    40, 30,
     1.,
     100000000,
     1, 1000

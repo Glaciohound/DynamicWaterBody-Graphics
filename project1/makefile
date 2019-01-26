@@ -11,11 +11,10 @@ debug = #-g -fsanitize=address -fno-omit-frame-pointer
 FLAGS = $(debug) $(optim) -std=c++11
 
 kernel:
-	make clearall
-	make $(target)
-	#make run
-	#make show
 	make clear
+	make $(target)
+	make run
+	#make show
 
 $(target): $(objects) $(source) scene.cpp #../matrix.cpp ../image.cpp ../utils.cpp ../BVH
 	$(compiler) $(FLAGS) -o $(target) $(objects)
@@ -39,7 +38,4 @@ show:
 	open $(output).bmp
 	#open $(output).obj
 run:
-	./$(target) $(output) 0 1000000
-
-#Notes:
-#Sudo yum groupinstall “Development Tools”	
+	./$(target) $(output) 1 100000
