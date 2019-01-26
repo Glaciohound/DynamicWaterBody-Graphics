@@ -92,7 +92,6 @@ bool has_color(string color_name){
     else 
         return false;
 }
-// TODO project2 will suck without - operator
 Light::Light(Vector3d f, Vector3d d, float r, string name):
     from(f), direction(d.normalized()), range(r), color(name){
         fin = direction.get_FinVector();
@@ -143,9 +142,9 @@ void Image::output(string outfile_name){
     unsigned char output_string[3*width*height];
     for (int i=0; i!=width; i++)
         for (int j=0; j!=height; j++){
-            output_string[3*((h-1-j)*w+i)+2] = (unsigned char)image[i][j].x;
-            output_string[3*((h-1-j)*w+i)+1] = (unsigned char)image[i][j].y;
-            output_string[3*((h-1-j)*w+i)+0] = (unsigned char)image[i][j].z;
+            output_string[3*(j*w+i)+2] = (unsigned char)image[i][j].x;
+            output_string[3*(j*w+i)+1] = (unsigned char)image[i][j].y;
+            output_string[3*(j*w+i)+0] = (unsigned char)image[i][j].z;
         }
     for(int i=0; i<h; i++)
     {
@@ -185,9 +184,9 @@ bool Image::from_file(string infile_name)
     for (int i=0; i!=width; i++)
         for (int j=0; j!=height; j++)
             image[i][j] = Color(
-                    img[3*((height-1-j)*width+i)+2],
-                    img[3*((height-1-j)*width+i)+1],
-                    img[3*((height-1-j)*width+i)+0]);
+                    img[3*(j*width+i)+2],
+                    img[3*(j*width+i)+1],
+                    img[3*(j*width+i)+0]);
     return true;
 }
 void Image::reset(int w, int h){

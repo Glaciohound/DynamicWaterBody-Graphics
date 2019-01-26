@@ -38,4 +38,4 @@ show:
 	open $(output).bmp
 	#open $(output).obj
 run:
-	./$(target) $(output) 1 1000000
+	./$(target) $(output) 0 100000
