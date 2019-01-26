@@ -68,7 +68,7 @@ class Image{
         int width, height, radius;
         string feature;
         Color color;
-        vector<unsigned char> img;
+        vector<vector<Color>> image;
         vector<Vector3d> measurement;
         vector<vector<float>> values;
         vector<vector<Pair>> DP_values;

@@ -100,7 +100,7 @@ Light::Light(Vector3d f, Vector3d d, float r, string name):
 
 /* ------------ Image Zone -------------*/
 
-Image::Image(int w, int h, string command): feature(command), color(Color(0, 0, 0)), width(w), height(h), radius(min(w, h)/2), img(3*w*h, 0), measurement(w*h, Vector3d(0, 0, 0)), values(width, vector<float>(height, 0)){ }
+Image::Image(int w, int h, string command): feature(command), color(Color(0, 0, 0)), width(w), height(h), radius(min(w, h)/2), measurement(w*h, Vector3d(0, 0, 0)), values(width, vector<float>(height, 0)){ }
 void Image::output(string outfile_name){
     FILE *f;
     int filesize = 54 + 3*width*height;
@@ -133,7 +133,13 @@ void Image::output(string outfile_name){
     f = fopen(outfile_name.c_str(),"w");
     fwrite(bmpfileheader,1,14,f);
     fwrite(bmpinfoheader,1,40,f);
-    unsigned char* output_string = &img[0];
+    unsigned char output_string[3*width*height];
+    for (int i=0; i!=width; i++)
+        for (int j=0; j!=height; j++){
+            output_string[3*((h-1-j)*w+i)+2] = (unsigned char)image[i][j].x;
+            output_string[3*((h-1-j)*w+i)+1] = (unsigned char)image[i][j].y;
+            output_string[3*((h-1-j)*w+i)+0] = (unsigned char)image[i][j].z;
+        }
     for(int i=0; i<h; i++)
     {
         fwrite(output_string+(w*(h-i-1)*3),3,w,f);
@@ -154,9 +160,9 @@ bool Image::from_file(string infile_name)
     width = head[4] + (head[5]<<8) + (head[6]<<16) + (head[7]<<24);
     height = head[8] + (head[9]<<8) + (head[10]<<16) + (head[11]<<24);
     radius = min(width, height)/2;
+    image = vector<vector<Color>>(width, vector<Color>(height));
 
-    vector<unsigned char>().swap(img);
-    img = vector<unsigned char>(width * height * 3);
+    vector<unsigned char>img(width * height * 3);
     int m = max(height, width);
     values = vector<vector<float>>(m, vector<float>(m, 0));
     DP_values = vector<vector<Pair>>(m, vector<Pair>(m));
@@ -169,6 +175,12 @@ bool Image::from_file(string infile_name)
         fread(bmppad,1,(4-(width*3)%4)%4,f);
     }
     fclose(f);
+    for (int i=0; i!=width; i++)
+        for (int j=0; j!=height; j++)
+            image[i][j] = Color(
+                    img[3*((height-1-j)*width+i)+2],
+                    img[3*((height-1-j)*width+i)+1],
+                    img[3*((height-1-j)*width+i)+0]);
     return true;
 }
 void Image::reset(int w, int h){
@@ -177,19 +189,13 @@ void Image::reset(int w, int h){
 void Image::draw_point(float x, float y, Color color){
     int radius = min(width, height)/2;
     int i=x*height+width/2, j=y*height+height/2, w=width, h=height;
-    if (i>=width || i<0 || j>=height || j<0)
-        return;
-    img[3*((h-1-j)*w+i)+2] = (int)color.x;
-    img[3*((h-1-j)*w+i)+1] = (int)color.y;
-    img[3*((h-1-j)*w+i)+0] = (int)color.z;
+    draw_point(i, j, color);
 }
 void Image::draw_point(int i, int j, Color color){
     int w=width, h=height;
     if (i>=width || i<0 || j>=height || j<0)
         return;
-    img[3*((h-1-j)*w+i)+2] = color.x;
-    img[3*((h-1-j)*w+i)+1] = color.y;
-    img[3*((h-1-j)*w+i)+0] = color.z;
+    image[i][j] = color;
 }
 Color Image::pick_color(int i, int j){
     if (feature == "mono" || feature == "mirror" || feature == "glass"){
@@ -198,11 +204,7 @@ Color Image::pick_color(int i, int j){
     int w=width, h=height;
     if (i>=width || i<0 || j>=height || j<0)
         return Color(0, 0, 0);
-    return Color(
-            resize(img[3*((h-1-j)*w+i)+2]),
-            resize(img[3*((h-1-j)*w+i)+1]),
-            resize(img[3*((h-1-j)*w+i)+0])
-            );
+    return image[i][j];
 }
 Color Image::pick_color(float x, float y){
     return pick_color((int)(x*width), (int)(y*height));
@@ -211,6 +213,9 @@ void Image::draw_from_measurement(){
     for(int i = 0; i< width * height; i++)
         draw_point(i%width, height-i/width, Color(toInt(measurement[i].x), toInt(measurement[i].y), toInt(measurement[i].z)));
 }
+
+
+/* --------------------- Seam Carving Zone ----------------------------*/
 void Image::calculate_value(string type){
     if (type == "horizontal"){
         for (int i=0; i!=width; i++)
