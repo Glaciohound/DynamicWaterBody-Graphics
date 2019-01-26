@@ -6,7 +6,7 @@ source = $(target:=.cpp)
 output = trial
 
 compiler = g++
-optim = #-O3 -fopenmp
+optim = -O3 -fopenmp
 debug = #-g -fsanitize=address -fno-omit-frame-pointer 
 FLAGS = $(debug) $(optim) -std=c++11
 
@@ -31,17 +31,15 @@ image.o: ../image.cpp ../image.h
 BVH.o: ../BVH.cpp ../BVH.h 
 	$(compiler) $(FLAGS) -c ../BVH.cpp 
 
-clearall:
-	rm -rf $(objects) $(target) main.dSYM ppm.o
 clear:
-	rm -f $(target:=.o)
+	rm -rf $(objects) $(target) main.dSYM ppm.o
 edit:
 	mvim $(source)
 show:
 	open $(output).bmp
 	#open $(output).obj
 run:
-	./$(target) $(output) 0 4000
+	./$(target) $(output) 0 1000000
 
 #Notes:
 #Sudo yum groupinstall “Development Tools”	

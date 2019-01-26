@@ -100,7 +100,13 @@ Light::Light(Vector3d f, Vector3d d, float r, string name):
 
 /* ------------ Image Zone -------------*/
 
-Image::Image(int w, int h, string command): feature(command), color(Color(0, 0, 0)), width(w), height(h), radius(min(w, h)/2), measurement(w*h, Vector3d(0, 0, 0)), values(width, vector<float>(height, 0)){ }
+Image::Image(int w, int h, string command): 
+    feature(command), color(Color(0, 0, 0)),
+    width(w), height(h),
+    image(width, vector<Color>(height)),
+    radius(min(w, h)/2),
+    measurement(w*h, Vector3d(0, 0, 0)),
+    values(width, vector<float>(height, 0)){ }
 void Image::output(string outfile_name){
     FILE *f;
     int filesize = 54 + 3*width*height;

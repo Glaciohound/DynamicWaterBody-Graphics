@@ -14,11 +14,6 @@ using namespace std;
 #include <stdlib.h>
 
 int main(int argc, char* argv[]){
-    Image image;
-    image.from_file(argv[1]);
-    image.output(argv[2]);
-    return 0;
-
     srand(time(0));
     string file_name = (argc>=2)? argv[1]:"output";
     int seed = atoi(argv[2]);
