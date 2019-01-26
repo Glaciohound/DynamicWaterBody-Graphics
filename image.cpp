@@ -50,8 +50,9 @@ List* ListAdd(HPoint *i,List* h){
 inline unsigned int Scene::f_hash(const int ix, const int iy, const int iz) {
 	return (unsigned int)((ix*73856093)^(iy*19349663)^(iz*83492791))%num_hash;
 }
-int toInt(float x){
-	return int(pow(1-exp(-x),1/2.2)*255+.5);
+inline float toInt(float x){ return int(pow(1-exp(-x),1/2.2)*255+.5); }
+Color toInt(Vector3d v){
+    return Color(toInt(v.x), toInt(v.y), toInt(v.z));
 }
 inline int resize(int x){
     return x;
@@ -218,7 +219,7 @@ Color Image::pick_color(float x, float y){
 void Image::draw_from_measurement(){
     for(int i = 0; i< width; i++)
         for (int j=0; j < height; j++)
-            draw_point(i, j, Color(toInt(measurement[i][j].x), toInt(measurement[i][j].y), toInt(measurement[i][j].z)));
+            draw_point(i, j, toInt(measurement[i][j]));
 }
 
 
@@ -464,7 +465,6 @@ Image Image::denoise(int size, float alpha){
         }
     return output;
 }
-
 
 
 /* ------------ NurbsCurve Zone -------------*/
