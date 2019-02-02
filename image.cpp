@@ -19,7 +19,7 @@
 /* ------------- Utility --------------*/
 using namespace std;
 static const float pi = 3.14159265358979;
-static float Max=1e10, zero_threshold=1e-6, big_threshold = 0.002, medium_threshold=1e-4;
+static float Max=1e10, zero_threshold=1e-6, triangle_threshold = 1.1, medium_threshold=1e-4;
 #define PI ((float)3.14159265358979)
 #define ALPHA ((float)0.85)
 int pvalue[61]={
@@ -737,9 +737,11 @@ void Scene::sketch(NurbsSurface surface, Color color){
     v_count += m*n;
 }
 void NurbsSurface::build_patches(){
-    for (int j=0; j!=m-1; j++)
+	//#pragma omp parallel for schedule(dynamic, 1)
+    for (int j=0; j<=m-2; j++)
         for (int k=0; k!=n-1; k++){
-            patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1)));
+            patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1), true));
+            patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1), false));
         }
 }
 Matrix NurbsSurface::getPoint(float u, float v){
@@ -833,10 +835,21 @@ Matrix NurbsSurface::intersect(Ray view, Vector u_range, Vector v_range){
 
 /* ------------ Patch Zone -------------*/
 
-Patch::Patch(NurbsSurface* surface, float xmin, float xmax, float ymin, float ymax):
+Patch::Patch(NurbsSurface* surface, float xmin, float xmax, float ymin, float ymax, bool upper):
     surface(surface),
     u_range(vector<float>{xmin, xmax}),
     v_range(vector<float>{ymin, ymax}) {
+        if (not upper){
+            p1 = surface->getPoint(xmin, ymin);
+            p2 = surface->getPoint(xmax, ymin);
+            p3 = surface->getPoint(xmin, ymax);
+        }
+        else{
+            p1 = surface->getPoint(xmax, ymin);
+            p2 = surface->getPoint(xmax, ymax);
+            p3 = surface->getPoint(xmin, ymax);
+        }
+        k = (p2 - p1).cross(p3 - p1);
         int m = surface->m, n = surface->n, k = surface->k;
         int imin = xmin*(m - k),
             imax = xmax*(m - k) + k-1,
@@ -858,28 +871,42 @@ Vector3d& Patch::getCentroid(){
 }
 bool Patch::intersect(Ray view, IntersectionInfo<Patch>* info){
     float t = (centroid - view.from).dot(view.direction);
-    if (u_range[1]-u_range[0] <= big_threshold){
-        info->object = this;
-        info->tuv = Vector3d(t, (u_range[0] + u_range[1])/2, (v_range[0] + v_range[1])/2);
-        info->hit = centroid;
-        info->norm = norm;
-        info->intersected = true;
-        Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
-        info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
-        return true;
+    if (u_range[1]-u_range[0] <= triangle_threshold){
+        float t = ((p1 - view.from).dot(k)) / (view.direction.dot(k));
+        Vector3d p = view.from + t * view.direction,
+                 v1 = p1 - p,
+                 v2 = p2 - p,
+                 v3 = p3 - p,
+                 x1 = v1.cross(v2),
+                 x2 = v2.cross(v3),
+                 x3 = v3.cross(v1);
+        if (x1.dot(x2)<0 || x2.dot(x3)<0 || x3.dot(x1)<0)
+            return false;
+        else{
+            info->object = this;
+            info->tuv = Vector3d(t, (u_range[0] + u_range[1])/2, (v_range[0] + v_range[1])/2);
+            info->hit = centroid;
+            info->norm = norm;
+            info->intersected = true;
+            Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
+            info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
+            return true;
+        }
     }
-    Matrix tuple = surface->intersect(view, u_range, v_range);
-    if (tuple[0][0] > 0){
-        info->object = this;
-        info->tuv = tuple[0];
-        info->hit = tuple[1];
-        info->norm = tuple[2];
-        info->intersected = true;
-        Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
-        info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
-        return true;
+    else{
+        Matrix tuple = surface->intersect(view, u_range, v_range);
+        if (tuple[0][0] > 0){
+            info->object = this;
+            info->tuv = tuple[0];
+            info->hit = tuple[1];
+            info->norm = tuple[2];
+            info->intersected = true;
+            Color color = surface->image.pick_color(info->tuv[1], info->tuv[2]);
+            info->color = Vector3d::max(Vector3d(color.x/255., color.y/255., color.z/255.), Vector3d(0, 0, 0));
+            return true;
+        }
+        else return false;
     }
-    else return false;
 }
 ostream& operator<<(ostream& stream, const Patch& patch){
     return stream<<"bbox: "<<endl<<patch.bBox<<"centroid: "<<endl<<patch.centroid<<"uv: "<<endl<<patch.u_range<<patch.v_range<<endl;
@@ -958,7 +985,8 @@ void Scene::render(string file_name, int seed){
 	//#pragma omp parallel for schedule(dynamic, 1)
 	for (int x=0; x<image.width; x++){
 		for (int y=0; y<image.height; y++)
-            for (int j=0; j!=multi_select; j++){
+            for (int j=0; j!=multi_select; j++)
+            {
                 int k = x+y*image.width;
                 Vector3d d = shoot_ray(2.*(x+hal(13, k))/image.width-1, -2.*(y+hal(16, k))/image.height+1);
                 trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(1, 1, 1), 0, x+y*image.width);

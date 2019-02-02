@@ -61,7 +61,7 @@ void construct_0(int seed, int length){
     string same_color = "gray";
     float up = 15, down = -15, left = -15, right = 15, front = -15, back = 20, ground = -1;
 
-    NurbsSurface water(20, 20, "glass", 2);
+    NurbsSurface water(3000, 3000, "glass", 2);
     water.water_expand(
             NurbsCurve(vector<Vector3d>{Vector3d(front, left, ground), Vector3d(back, left, ground)}),
             NurbsCurve(vector<Vector3d>{Vector3d(front, left, ground), Vector3d(front, right, ground)}),

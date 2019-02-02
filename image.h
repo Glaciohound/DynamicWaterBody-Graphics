@@ -183,8 +183,8 @@ class Patch{
         NurbsSurface* surface;
         Vector u_range, v_range;
         Box bBox;
-        Vector3d centroid, norm;
-        Patch(NurbsSurface*, float, float, float, float);
+        Vector3d centroid, norm, p1, p2, p3, k;
+        Patch(NurbsSurface*, float, float, float, float, bool);
         Box& getBox();
         Vector3d& getCentroid();
         bool intersect(Ray view, IntersectionInfo<Patch>*);

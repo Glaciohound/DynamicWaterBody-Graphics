@@ -7,7 +7,7 @@ output = trial
 
 compiler = g++
 optim = -O3 -fopenmp
-debug = #-g -fsanitize=address -fno-omit-frame-pointer 
+debug = #-g #-fsanitize=address -fno-omit-frame-pointer 
 FLAGS = $(debug) $(optim) -std=c++11
 
 kernel:
@@ -38,4 +38,4 @@ show:
 	open $(output).bmp
 	#open $(output).obj
 run:
-	./$(target) $(output) 0 100000
+	./$(target) $(output) 0 20000000
