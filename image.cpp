@@ -50,7 +50,7 @@ List* ListAdd(HPoint *i,List* h){
 inline unsigned int Scene::f_hash(const int ix, const int iy, const int iz) {
 	return (unsigned int)((ix*73856093)^(iy*19349663)^(iz*83492791))%num_hash;
 }
-inline float toInt(float x){ return int(pow(1-exp(-x),1/2.2)*255+.5); }
+inline float toInt(float x){ return (unsigned char)(pow(1-exp(-x),1/2.2)*255+.5); }
 Color toInt(Vector3d v){
     return Color(toInt(v.x), toInt(v.y), toInt(v.z));
 }
@@ -107,6 +107,7 @@ Image::Image(int w, int h, string command):
     radius(min(w, h)/2),
     measurement(w, vector<Vector3d>(h)),
     values(width, vector<float>(height)){ }
+
 void Image::output(string outfile_name){
     FILE *f;
     int filesize = 54 + 3*width*height;
@@ -737,9 +738,10 @@ void Scene::sketch(NurbsSurface surface, Color color){
     v_count += m*n;
 }
 void NurbsSurface::build_patches(){
-	//#pragma omp parallel for schedule(dynamic, 1)
+    ProgressBar pbar((m-1)*(n-1));
     for (int j=0; j<=m-2; j++)
         for (int k=0; k!=n-1; k++){
+            pbar.update();
             patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1), true));
             patchList.push_back(Patch(this, 1.*j/(m-1), 1.*(j+1)/(m-1), 1.*k/(n-1), 1.*(k+1)/(n-1), false));
         }
@@ -989,7 +991,7 @@ void Scene::render(string file_name, int seed){
             {
                 int k = x+y*image.width;
                 Vector3d d = shoot_ray(2.*(x+hal(13, k))/image.width-1, -2.*(y+hal(16, k))/image.height+1);
-                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(1, 1, 1), 0, x+y*image.width);
+                trace(Ray(View.from, d, NULL), 0, true, Vector3d(), Vector3d(2, 2, 2), 0, x+y*image.width);
 		}
         pbar.update();
 	}
@@ -1008,7 +1010,7 @@ void Scene::render(string file_name, int seed){
 		Vector3d f;
         if ((i+1) % 1000 == 0){
             output(file_name, m);
-            cout<<endl<<"A new output image"<<endl;
+            cout<<endl<<"Output image at "<<i<<" photons."<<endl;
         }
 		for(int j=0;j<num_thread;j++){
 			genp(&r,&f,m+j, (m+j)%num_lights, seed); 
@@ -1020,7 +1022,7 @@ void Scene::render(string file_name, int seed){
 }
 void Scene::build_bvh(){
     int l = surfaces.size();
-    patchList.reserve(1000);
+    patchList.reserve(10000000);
     cout<<endl<<"[== Creating BVH ==]"<<endl;
     for (int i=0; i!=l; i++){
         surfaces[i].build_patches();

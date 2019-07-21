@@ -23,7 +23,7 @@ void ProgressBar::update(int update){
     float gamma = 0.9999;
     sec_per_job = gamma * sec_per_job + (1-gamma) * (t - time_last);
     time_last = t;
-    if (goal <= 1000 or rand()%goal%(goal/1000)==0)
+    if (progress>0 && (goal <= 1000 or rand()%goal%(goal/1000)==0))
         show();
     if (progress > goal-1){
         printf("\n[PBar finished]\n");
